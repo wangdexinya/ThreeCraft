@@ -12,44 +12,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4  # 升级到 v4
         with:
           # “最近更新时间” 等 git 日志相关信息，需要拉取全部提交记录
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4  # 升级到 v4
         with:
-          # 选择要使用的 node 版本
-          node-version: '16'
+          # 建议升级到 LTS 版本（Node 16 已停止维护）
+          node-version: '20'  # 也可根据项目需求改为 18
 
       - name: Cache pnpm modules
-        uses: actions/cache@v2
+        uses: actions/cache@v4  # 升级到 v4
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-
 
-      - uses: pnpm/action-setup@v2.1.0
+      - uses: pnpm/action-setup@v4  # 升级到 v4
         with:
-          version: 6.0.2
+          version: 9.0.0  # 升级到最新稳定版（也可写 latest 自动用最新版）
           run_install: true
 
       # 运行构建脚本
       - name: Build site
         run: pnpm build
 
-      # 拷贝一个奇怪的依赖
-      # - name: copy asset
-      #   run: mkdir ./dist/src && cp -r ./src/assets ./dist/src
-
       - name: Deploy to Server
-        uses: easingthemes/ssh-deploy@v2.1.5
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
-          ARGS: '-rltgoDzvO --delete'
-          SOURCE: dist/*
-          REMOTE_HOST: ${{ secrets.HOST }}
-          REMOTE_USER: root
-          TARGET: /home/liukairui/wwwroot/mc/html
+        # 替换已归档的 easingthemes/ssh-deploy，使用维护活跃的替代方案
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: root
+          key: ${{ secrets.SSH_KEY }}
+          # 保持你原来的 rsync 参数逻辑
+          script: |
+            rsync -rltgoDzvO --delete $GITHUB_WORKSPACE/dist/* /home/wangdexinya/wwwroot/mc/html/
